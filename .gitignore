@@ -37,3 +37,8 @@ Thumbs.db
 lib/
 include/
 share/
+
+# white
+predictions.jpg
+pretrain_models/
+darknet
