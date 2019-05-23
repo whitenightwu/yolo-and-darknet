@@ -1,6 +1,6 @@
-classes= 20
-train  = /home/ydwu/work/yolo/VOC/train.txt
-valid  = /home/ydwu/work/yolo/VOC/2007_test.txt
+classes= 21
+train  = /home/ydwu/work/yolo/a_darknet/white/train.txt
+valid  = /home/ydwu/work/yolo/a_darknet/white/test.txt
 names = white/white.names
 backup = /home/ydwu/work/yolo/a_darknet/backup/
 
