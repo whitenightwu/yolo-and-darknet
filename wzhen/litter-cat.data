@@ -1,0 +1,6 @@
+classes= 8
+# train  = build/darknet/x64/data/train.txt
+valid  = build/darknet/x64/data/validation.txt
+names = wzhen/litter-cat.names
+# backup = build/darknet/x64/backup
+
