@@ -57,11 +57,30 @@ weight=/home/ydwu/work/yolo/darknet/backup/yolov3-voc_10000.weights
 # 	  /media/ydwu/Office/models/yolo系列/yolov3-coco-spp/yolov3-spp.weights 
 
 
+
+# ################# test
+
+# dir='/home/ydwu/project5/alpr-unconstrained/output/tmp'
+# for img_path in $dir/*
+# do
+#     echo $img_path
+
+#     ./darknet detector test cfg/coco.data cfg/yolov3-spp.cfg \
+# 	      /media/ydwu/Office/models/yolo系列/yolov3-coco-spp/yolov3-spp.weights \
+# 	      $img_path
+
+# done
+
+# # # multi_path
+# ./darknet detector test cfg/coco.data cfg/yolov3-spp.cfg \
+# 	  /media/ydwu/Office/models/yolo系列/yolov3-coco-spp/yolov3-spp.weights \
+# 	  /home/ydwu/project5/alpr-unconstrained/output/tmp/1005.jpg
+
 # ################# demo
 
-# ./darknet detector demo cfg/coco.data cfg/yolov3-spp.cfg \
-# 	  /media/ydwu/Office/models/yolo系列/yolov3-coco-spp/yolov3-spp.weights 
-# 	  # -i 0 -thresh 0.25
+./darknet detector demo cfg/coco.data cfg/yolov3-spp.cfg \
+	  /media/whitewu/Office/models/yolo系列/yolov3-coco-spp/yolov3-spp.weights 
+	  # -i 0 -thresh 0.25
 
 
 # ./darknet detector demo cfg/coco.data /media/ydwu/Office/models/yolo系列/yolov3-coco/yolov3.cfg \

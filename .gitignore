@@ -43,3 +43,7 @@ predictions.jpg
 pretrain_models/
 darknet
 white/
+CMake*
+DarknetConfig*
+cmake*
+uselib
