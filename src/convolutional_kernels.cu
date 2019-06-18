@@ -1,6 +1,6 @@
-#include "cuda_runtime.h"
-#include "curand.h"
-#include "cublas_v2.h"
+#include <cuda_runtime.h>
+#include <curand.h>
+#include <cublas_v2.h>
 
 #include "convolutional_layer.h"
 #include "batchnorm_layer.h"
@@ -484,14 +484,14 @@ void forward_convolutional_layer_gpu(convolutional_layer l, network_state state)
                     l.normDstTensorDescF16,
                     output16,            // output
                     l.normTensorDesc,
-                    l.scales_gpu,
-                    l.biases_gpu,
+                    l.scales_gpu,       // input
+                    l.biases_gpu,       // input
                     .01,
-                    l.rolling_mean_gpu,        // output (should be FP32)
-                    l.rolling_variance_gpu,    // output (should be FP32)
+                    l.rolling_mean_gpu,        // input/output (should be FP32)
+                    l.rolling_variance_gpu,    // input/output (should be FP32)
                     .00001,
-                    l.mean_gpu,            // output (should be FP32)
-                    l.variance_gpu));    // output (should be FP32)
+                    l.mean_gpu,            // output (should be FP32) - optional cache to speedup cudnnBatchNormalizationBackward()
+                    l.variance_gpu));    // output (should be FP32) - optional cache to speedup cudnnBatchNormalizationBackward()
 
                 cuda_convert_f16_to_f32(output16, output16_size, l.output_gpu);
                 //forward_batchnorm_layer_gpu(l, state);
@@ -518,7 +518,7 @@ void forward_convolutional_layer_gpu(convolutional_layer l, network_state state)
         printf("\n is_nan_or_inf(state.input) = %d \n", input_nan_inf);
         if (input_nan_inf) getchar();
 
-        int weights_nan_inf = is_nan_or_inf(l.weights_gpu, l.size * l.size * l.c * l.n);
+        int weights_nan_inf = is_nan_or_inf(l.weights_gpu, l.nweights);
         printf("\n is_nan_or_inf(l.weights_gpu) = %d \n", weights_nan_inf);
         if (weights_nan_inf) getchar();
         */
@@ -566,9 +566,20 @@ void forward_convolutional_layer_gpu(convolutional_layer l, network_state state)
                 b = im;
             }
             else {
-                im2col_ongpu(im, l.c / l.groups, l.h, l.w, l.size, l.stride, l.pad, state.workspace);
+                //im2col_ongpu(im, l.c / l.groups, l.h, l.w, l.size, l.stride, l.pad, state.workspace);
+
+                im2col_gpu_ext(im,          // input
+                    l.c / l.groups,         // input channels
+                    l.h, l.w,               // input size (h, w)
+                    l.size, l.size,         // kernel size (h, w)
+                    l.pad, l.pad,           // padding (h, w)
+                    l.stride, l.stride,     // stride (h, w)
+                    l.dilation, l.dilation, // dilation (h, w)
+                    state.workspace);       // output
+
             }
-            gemm_ongpu(0, 0, m, n, k, 1., a, k, b, n, 1., c + i*m*n, n);
+            //gemm_ongpu(0, 0, m, n, k, 1., a, k, b, n, 1., c + i*m*n, n);
+            gemm_ongpu(0, 0, m, n, k, 1, a, k, b, n, 1, c, n);
         }
     }
 
@@ -658,13 +669,13 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network_state state
                 &one,
                 &one,
                 l.normDstTensorDescF16,
-                l.x_gpu,                // input
+                l.x_gpu,                // input (input in BN-forward-inference)
                 l.normDstTensorDescF16,
                 delta16,                // input
                 l.normDstTensorDescF16,
-                l.x_norm_gpu,            // output
+                l.x_norm_gpu,            // output (new delta)
                 l.normTensorDesc,
-                l.scales_gpu,            // output (should be FP32)
+                l.scales_gpu,            // input (should be FP32)
                 l.scale_updates_gpu,    // output (should be FP32)
                 l.bias_updates_gpu,        // output (should be FP32)
                 .00001,
@@ -686,8 +697,8 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network_state state
         // calculate conv weight updates
         // Already: l.weight_updates_gpu = (l.weight_updates_gpu - l.weight*decay*batch*subdivision)*momentum
         //   so we should copy f32 to f16, or compute: f16=(w_up - w*d*b*s)*m
-        assert((l.c*l.n*l.size*l.size) > 0);
-        cuda_convert_f32_to_f16(l.weight_updates_gpu, l.c*l.n*l.size*l.size, l.weight_updates_gpu16);
+        assert((l.nweights) > 0);
+        cuda_convert_f32_to_f16(l.weight_updates_gpu, l.nweights, l.weight_updates_gpu16);
 
         CHECK_CUDNN(cudnnConvolutionBackwardFilter(cudnn_handle(),
             &one,
@@ -703,7 +714,7 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network_state state
             l.dweightDesc16,
             l.weight_updates_gpu16));    // l.weight_updates_gpu);
 
-        cuda_convert_f16_to_f32(l.weight_updates_gpu16, l.c*l.n*l.size*l.size, l.weight_updates_gpu);
+        cuda_convert_f16_to_f32(l.weight_updates_gpu16, l.nweights, l.weight_updates_gpu);
 
         if (state.delta) {
             if (l.binary || l.xnor) swap_binary(&l);
@@ -798,8 +809,17 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network_state state
 
             float *im = state.input + (i*l.groups + j)*l.c / l.groups*l.h*l.w;
 
-            im2col_ongpu(im, l.c / l.groups, l.h, l.w, l.size, l.stride, l.pad, state.workspace);
-            gemm_ongpu(0, 1, m, n, k, 1, a + i*m*k, k, b, k, 1, c, n);
+            //im2col_ongpu(im, l.c / l.groups, l.h, l.w, l.size, l.stride, l.pad, state.workspace);
+            im2col_gpu_ext(im,          // input
+                l.c / l.groups,         // input channels
+                l.h, l.w,               // input size (h, w)
+                l.size, l.size,         // kernel size (h, w)
+                l.pad, l.pad,           // padding (h, w)
+                l.stride, l.stride,     // stride (h, w)
+                l.dilation, l.dilation, // dilation (h, w)
+                state.workspace);       // output
+            //gemm_ongpu(0, 1, m, n, k, 1, a + i*m*k, k, b, k, 1, c, n);
+            gemm_ongpu(0, 1, m, n, k, 1, a, k, b, k, 1, c, n);
 
             if (state.delta) {
                 if (l.binary || l.xnor) swap_binary(&l);
@@ -807,11 +827,23 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network_state state
                 float * b = l.delta_gpu + (i*l.groups + j)*m*k;
                 float * c = state.workspace;
 
-                gemm_ongpu(1, 0, n, k, m, 1, a, n, b + i*k*m, k, 0, c, k);
+                //gemm_ongpu(1, 0, n, k, m, 1, a, n, b + i*k*m, k, 0, c, k);
+                gemm_ongpu(1, 0, n, k, m, 1, a, n, b, k, 0, c, k);
+
 
                 float *delta = state.delta + (i*l.groups + j)*l.c / l.groups*l.h*l.w;
 
-                col2im_ongpu(state.workspace, l.c / l.groups, l.h, l.w, l.size, l.stride, l.pad, delta);
+                //col2im_ongpu(state.workspace, l.c / l.groups, l.h, l.w, l.size, l.stride, l.pad, delta);
+                col2im_gpu_ext(
+                    state.workspace,        // input
+                    l.c / l.groups,         // input channels
+                    l.h, l.w,               // input size (h, w)
+                    l.size, l.size,         // kernel size (h, w)
+                    l.pad, l.pad,           // padding size (h, w)
+                    l.stride, l.stride,     // stride size (h, w)
+                    l.dilation, l.dilation, // dilation size (h, w)
+                    delta);                 // output (delta)
+
                 if (l.binary || l.xnor) {
                     swap_binary(&l);
                 }
@@ -824,7 +856,7 @@ void backward_convolutional_layer_gpu(convolutional_layer l, network_state state
         if (state.delta) {
             fix_nan_and_inf(state.delta, l.inputs * l.batch);
         }
-        int size = l.size * l.size * l.c * l.n;
+        int size = l.nweights;
         fix_nan_and_inf(l.weight_updates_gpu, size);
         fix_nan_and_inf(l.weights_gpu, size);
     }

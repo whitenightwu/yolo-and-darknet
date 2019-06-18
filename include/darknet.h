@@ -36,12 +36,12 @@
 
 #ifdef GPU
 
-#include "cuda_runtime.h"
-#include "curand.h"
-#include "cublas_v2.h"
+#include <cuda_runtime.h>
+#include <curand.h>
+#include <cublas_v2.h>
 
 #ifdef CUDNN
-#include "cudnn.h"
+#include <cudnn.h>
 #endif
 #endif
 
@@ -104,6 +104,11 @@ typedef struct tree {
 typedef enum {
     LOGISTIC, RELU, RELIE, LINEAR, RAMP, TANH, PLSE, LEAKY, ELU, LOGGY, STAIR, HARDTAN, LHTAN, SELU
 }ACTIVATION;
+
+// parser.h
+typedef enum {
+    IOU, GIOU, MSE
+} IOU_LOSS;
 
 // image.h
 typedef enum{
@@ -180,6 +185,7 @@ struct layer {
     void(*forward_gpu)   (struct layer, struct network_state);
     void(*backward_gpu)  (struct layer, struct network_state);
     void(*update_gpu)    (struct layer, int, float, float, float);
+    layer *share_layer;
     int batch_normalize;
     int shortcut;
     int batch;
@@ -199,6 +205,7 @@ struct layer {
     int size;
     int side;
     int stride;
+    int dilation;
     int reverse;
     int flatten;
     int spatial;
@@ -308,6 +315,11 @@ struct layer {
 
     float *weights;
     float *weight_updates;
+
+    float scale_x_y;
+    float iou_normalizer;
+    float cls_normalizer;
+    IOU_LOSS iou_loss;
 
     char *align_bit_weights_gpu;
     float *mean_arr_gpu;
@@ -585,6 +597,7 @@ typedef struct network {
     int center;
     int flip; // horizontal flip 50% probability augmentaiont for classifier training (default = 1)
     int blur;
+    int mixup;
     float angle;
     float aspect;
     float exposure;
@@ -672,6 +685,24 @@ typedef struct box {
 } box;
 
 // box.h
+typedef struct boxabs {
+    float left, right, top, bot;
+} boxabs;
+
+// box.h
+typedef struct dxrep {
+    float dt, db, dl, dr;
+} dxrep;
+
+// box.h
+typedef struct ious {
+    float iou, giou;
+    dxrep dx_iou;
+    dxrep dx_giou;
+} ious;
+
+
+// box.h
 typedef struct detection{
     box bbox;
     int classes;
@@ -731,6 +762,7 @@ typedef struct load_args {
     float jitter;
     int flip;
     int blur;
+    int mixup;
     float angle;
     float aspect;
     float saturation;
@@ -796,7 +828,7 @@ LIB_API float *network_predict_image(network *net, image im);
 LIB_API float validate_detector_map(char *datacfg, char *cfgfile, char *weightfile, float thresh_calc_avg_iou, const float iou_thresh, const int map_points, network *existing_net);
 LIB_API void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, int ngpus, int clear, int dont_show, int calc_map, int mjpeg_port, int show_imgs);
 LIB_API void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh,
-    float hier_thresh, int dont_show, int ext_output, int save_labels, char *outfile);
+    float hier_thresh, int dont_show, int ext_output, int save_labels, char *outfile, int letter_box);
 LIB_API int network_width(network *net);
 LIB_API int network_height(network *net);
 LIB_API void optimize_picture(network *net, image orig, int max_layer, float scale, float rate, float thresh, int norm);
