@@ -14,8 +14,8 @@ import shutil
 
 #########################
 
-path = '/home/ydwu/work/yolo/Dataset/Tin can/train/Tin can'
-list_file = open('train_can.txt', 'w')
+path = '/home/wuyidong/datasets/yolo/all_data'
+list_file = open('train_white.txt', 'w')
 
 # path = '/home/ydwu/work/yolo/Dataset/Tin can/validation/Tin can'
 # list_file = open('val_can.txt', 'w')

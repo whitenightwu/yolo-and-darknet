@@ -55,3 +55,5 @@ uselib
 =======
 include/darknet/
 >>>>>>> 8c80ba6b53429347bd6249a16cd576c971a0776b
+
+.idea/*

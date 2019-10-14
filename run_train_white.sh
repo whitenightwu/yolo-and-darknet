@@ -1,9 +1,11 @@
+data_list='./white/white.data'
+cfg='/home/wuyidong/project1/yolo-and-darknet/white/yolov3-white.cfg'
+
+weights='/home/wuyidong/models/origin_yolov3/darknet53.conv.74'
+# weights='/home/wuyidong/project1/yolo-and-darknet/backup/yolov3-white_last.weights'
+
+
 ./darknet detector train \
-	  white/white.data \
-	  white/yolov3-white.cfg \
-	  pretrain_models/darknet53.conv.74
-
-
-# yolov3-voc.backup
-
-# darknet53.conv.74
+	  ${data_list} \
+	  ${cfg} \
+	  ${weights}
