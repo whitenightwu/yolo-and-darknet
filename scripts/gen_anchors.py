@@ -1,3 +1,5 @@
+# coding:utf-8
+
 '''
 Created on Feb 20, 2017
 
@@ -132,6 +134,7 @@ def main(argv):
         #line = line.replace('img1','labels')
         line = line.replace('JPEGImages','labels')        
         
+        line = line.replace('.JPG','.txt')
 
         line = line.replace('.jpg','.txt')
         line = line.replace('.png','.txt')
