@@ -1,6 +1,6 @@
 classes= 2
 train  = /home/wuyidong/project1/yolo-and-darknet/white/train_white.txt
-# valid  = /home/ydwu/work/yolo/a_darknet/white/test.txt
+valid  = /home/wuyidong/project1/yolo-and-darknet/white/train_white.txt
 names = white/white.names
 backup = /home/wuyidong/project1/yolo-and-darknet/backup
 

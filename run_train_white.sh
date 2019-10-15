@@ -6,6 +6,9 @@ weights='/home/wuyidong/models/origin_yolov3/darknet53.conv.74'
 
 
 ./darknet detector train \
-	  ${data_list} \
-	  ${cfg} \
-	  ${weights}
+    ${data_list} \
+    ${cfg} \
+    ${weights} \
+    -dont_show \
+    -gpus 0,1 \
+    -map

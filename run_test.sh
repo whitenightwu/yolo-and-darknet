@@ -33,6 +33,14 @@ darknet detector test \
 #     ${weights}
 
 
+# # recall
+# ./darknet detector recall \
+#     $data_list \
+#     $cfg \
+#     $weights
+# # RPs/Img: 80.86	IOU: 71.51%	Recall:88.76%
+
+
 # # map
 # ./darknet detector map \
 #     ${data_list} \
@@ -40,14 +48,6 @@ darknet detector test \
 #     ${weights} \
 #     -points 101 \
 #     -iou_thresh 0.5
-
-
-# # recall
-# ./darknet detector recall \
-#     $data_list \
-#     $cfg \
-#     $weights
-# # RPs/Img: 80.86	IOU: 71.51%	Recall:88.76%
 
 ###################################################################################
 ###################################################################################
