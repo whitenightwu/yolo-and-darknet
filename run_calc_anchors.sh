@@ -8,7 +8,7 @@ data_list='./white/white.data'
 ./darknet detector calc_anchors \
     ${data_list} \
     -num_of_clusters 9 \
-    -width 416 -height 416 -show
+    -width 512 -height 512 -show
 
 
 ###################################################################################

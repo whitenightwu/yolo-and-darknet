@@ -10,10 +10,29 @@ data_list='./cfg/coco.data'
 
 # # # multi_path
 
-darknet detector test \
-    $data_list \
-    $cfg \
-    $weights
+# ./darknet detector test \
+# 	$data_list \
+# 	$cfg \
+# 	$weights \
+# 	/home/wuyidong/
+
+
+dir='/home/wuyidong/datasets/origin_person_images'
+
+for img_path in $dir/*
+do
+
+    echo $img_path
+    ./darknet detector test \
+	${data_list} \
+	${cfg} \
+	${weights} \
+	${img_path}
+    mv /home/wuyidong/project1/yolo-and-darknet/predictions.jpg ${img_path}
+
+done
+# -dont_show \
+
 
 # test50.mp4 -i 0 -thresh 0.25
 
