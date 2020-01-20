@@ -1,0 +1,6 @@
+classes= 20
+train  = /home/wuyidong/project1/yolo-and-darknet/white_voc/train.txt
+valid  = /home/wuyidong/project1/yolo-and-darknet/white_voc/2007_2012_val.txt
+names = white_voc/voc.names
+backup = /home/wuyidong/project1/yolo-and-darknet/backup
+
