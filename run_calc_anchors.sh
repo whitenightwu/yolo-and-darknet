@@ -4,11 +4,11 @@
 ###################################################################################
 # # ################# yolo v3
 
-data_list='./white/white.data'
+data_list='./white_detect_person_coco/coco.data'
 ./darknet detector calc_anchors \
     ${data_list} \
     -num_of_clusters 9 \
-    -width 512 -height 512 -show
+    -width 416 -height 416 -show
 
 
 ###################################################################################

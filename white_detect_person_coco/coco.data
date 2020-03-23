@@ -1,0 +1,7 @@
+classes= 80
+train  = /home/wuyidong/project1/yolo-and-darknet/white_detect_person_coco/train_white.txt
+# valid  = /home/wuyidong/datasets/coco/5k.txt
+names = /home/wuyidong/project1/yolo-and-darknet/white_detect_person_coco/coco.names
+backup = /home/wuyidong/project1/yolo-and-darknet/backup
+#eval=coco
+
